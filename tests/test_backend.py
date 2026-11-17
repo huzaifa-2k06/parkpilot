@@ -55,13 +55,15 @@ def test_valid_departure(api):
     assert len(events) == 1 and events[0]['event_type'] == 'SPACE_AVAILABLE'
 
 
-@pytest.mark.parametrize('arrival_first,event_type', [
-    (True, 'SPACE_OCCUPIED'), (False, 'SPACE_AVAILABLE'),
+@pytest.mark.parametrize('prior_events,event_type', [
+    (('SPACE_OCCUPIED',), 'SPACE_OCCUPIED'),
+    (('SPACE_OCCUPIED', 'SPACE_AVAILABLE'), 'SPACE_AVAILABLE'),
+    ((), 'SPACE_AVAILABLE'),
 ])
-def test_duplicate_transition(api, arrival_first, event_type):
+def test_invalid_transition(api, prior_events, event_type):
     client, _ = api
-    if arrival_first:
-        send(client)
+    for prior_event in prior_events:
+        assert send(client, prior_event).status_code == 201
     before = client.get('/parking-spaces').json()
     events = client.get('/events').json()
     assert send(client, event_type).status_code == 409
@@ -108,7 +110,7 @@ def test_concurrent_arrivals(api):
     assert len(client.get('/events').json()) == 1
 
 
-def test_limits_cors_and_simulation(api):
+def test_limits_and_cors(api):
     client, _ = api
     for limit in ['0', '-1', '1001', 'nope']:
         assert client.get('/events', params={'limit': limit}).status_code == 422
@@ -117,5 +119,17 @@ def test_limits_cors_and_simulation(api):
         'Access-Control-Request-Headers': 'content-type',
     })
     assert response.headers['access-control-allow-origin'] == 'http://localhost:5173'
-    for action in ['start', 'stop']:
-        assert client.post(f'/simulation/{action}').status_code == 501
+
+
+def test_simulation_controls(api) -> None:
+    client, _ = api
+    before = client.get('/parking-spaces').json()
+    for action, running in [
+        ('stop', False), ('start', True), ('start', True), ('stop', False),
+    ]:
+        response = client.post(f'/simulation/{action}')
+        assert response.status_code == 200
+        assert response.json() == {'running': running}
+        assert client.app.state.simulation_running is running
+    assert client.get('/parking-spaces').json() == before
+    assert client.get('/events').json() == []

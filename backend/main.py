@@ -1,4 +1,4 @@
-"""Phase 1 parking API. Simulation is reserved for Phase 2."""
+"""Phase 1 parking API and simulation controls."""
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
@@ -10,7 +10,13 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database import Database, InvalidTransitionError, UnknownSpaceError
-from backend.schemas import ErrorResponse, ParkingEvent, ParkingEventRequest, ParkingSpace
+from backend.schemas import (
+    ErrorResponse,
+    ParkingEvent,
+    ParkingEventRequest,
+    ParkingSpace,
+    SimulationStatus,
+)
 
 logger = logging.getLogger(__name__)
 DEFAULT_DATABASE = Path(__file__).resolve().parent.parent / 'data' / 'parking.db'
@@ -23,6 +29,7 @@ def create_app(database_path: Path | str | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         database.initialize()
+        app.state.simulation_running = False
         yield
 
     app = FastAPI(title='ParkPilot', lifespan=lifespan)
@@ -53,10 +60,15 @@ def create_app(database_path: Path | str | None = None) -> FastAPI:
             logger.exception('Unable to persist parking event')
             raise HTTPException(status_code=500, detail='Unable to persist parking event') from error
 
-    @app.post('/simulation/start', response_model=ErrorResponse, status_code=501)
-    @app.post('/simulation/stop', response_model=ErrorResponse, status_code=501)
-    def simulation_unavailable() -> ErrorResponse:
-        return ErrorResponse(detail='Simulation is not implemented until Phase 2')
+    @app.post('/simulation/start')
+    async def start_simulation() -> SimulationStatus:
+        app.state.simulation_running = True
+        return SimulationStatus(running=app.state.simulation_running)
+
+    @app.post('/simulation/stop')
+    async def stop_simulation() -> SimulationStatus:
+        app.state.simulation_running = False
+        return SimulationStatus(running=app.state.simulation_running)
 
     return app
 

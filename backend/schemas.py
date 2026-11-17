@@ -30,5 +30,9 @@ class ParkingEvent(BaseModel):
     timestamp: str
 
 
+class SimulationStatus(BaseModel):
+    running: bool
+
+
 class ErrorResponse(BaseModel):
     detail: str

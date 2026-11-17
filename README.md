@@ -2,17 +2,25 @@
 
 FastAPI + SQLite API for a simulated 20-space parking lot. Project rules,
 requirements, and design are in `docs/agent.md`, `docs/prd (1).md`, and
-`docs/design.md`. Python 3.12 is the tested runtime.
+`docs/design.md`. Tested with Python 3.11 and 3.12.
 
 ## Setup and run
 
-From the repository root:
+From the repository root on macOS or Linux:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
 uvicorn backend.main:app --reload
+```
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn backend.main:app --reload
 ```
 
 The API listens on port 8000; interactive documentation is at `/docs`.
@@ -26,7 +34,7 @@ CORS permits `http://localhost:5173`.
 - `GET /parking-spaces`: all spaces ordered by ID; statuses are `available` or `occupied`.
 - `GET /events?limit=50`: newest events first; limit must be 1–1000.
 - `POST /webhook/parking-event`: accepts the payload below; returns the recorded event with HTTP 201.
-- `POST /simulation/start` and `/simulation/stop`: return HTTP 501 with an explicit Phase 2 message. No simulation runs in Phase 1.
+- `POST /simulation/start` and `POST /simulation/stop`: return HTTP 200 with `{"running": true}` and `{"running": false}`, respectively. These routes set an in-memory flag that resets to stopped on restart. Phase 2 will add event generation.
 
 ```sh
 curl -X POST http://localhost:8000/webhook/parking-event \
@@ -52,10 +60,12 @@ are UTC ISO 8601 strings. There are no extra vehicle matching or uniqueness rule
 pytest -q
 ```
 
+On Windows, run `.\.venv\Scripts\python.exe -m pytest -q` from the repository root.
+
 Tests use temporary databases, covering automatic seeding, persistence after
 restart, valid/duplicate transitions, unknown spaces, payload validation,
 forced insert failure rollback, concurrent arrivals, history limits, CORS,
-and the Phase 2 endpoint responses. The pinned Starlette release emits an
+and the simulation controls. The pinned Starlette release emits an
 HTTPX TestClient deprecation warning; tests still run with approved HTTPX.
 
 `requirements.txt` pins the four approved direct dependencies (FastAPI,
