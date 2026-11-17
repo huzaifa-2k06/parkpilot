@@ -10,7 +10,8 @@ import pandas as pd
 
 from ml.artifacts import DEFAULT_ARTIFACT_DIR, ReplayUnavailableError, load_bundle
 from ml.evaluate import predict_spaces
-from ml.preprocess import HORIZON_MINUTES, SOURCE, TIMEZONE, build_examples
+from ml.preprocess import FEATURES, HORIZON_MINUTES, SOURCE, TIMEZONE, build_examples
+from ml.explanation import ForecastExplanation, ForecastInput
 
 
 class ReplayNotFoundError(LookupError):
@@ -100,6 +101,38 @@ class HistoricalReplay:
             {'timestamp': item.timestamp.isoformat(), 'occupancy': int(item.occupancy)}
             for item in visible.itertuples(index=False)
         ]
+        inputs = [
+            ForecastInput(label='Facility', value=facility),
+            ForecastInput(label='Capacity', value=f'{capacity} spaces'),
+            ForecastInput(label='Current occupancy', value=f"{row['occupancy_rate']:.1%}"),
+            ForecastInput(label='30 minutes earlier', value=f"{row['lag_30_rate']:.1%}"),
+            ForecastInput(label='60 minutes earlier', value=f"{row['lag_60_rate']:.1%}"),
+            ForecastInput(label='Local time', value=reference.strftime('%A %H:%M')),
+        ]
+        tree_predictions = []
+        raw_occupied = float(row['current_occupancy'])
+        if self.model is None:
+            steps = ['Read occupancy at the reference time.', 'Carry that count forward 30 minutes.']
+        else:
+            encoded = self.model.named_steps['features'].transform(example[FEATURES])
+            estimator = self.model.named_steps['model']
+            raw_occupied = float(estimator.predict(encoded)[0]) * capacity
+            if self.model_name == 'Random Forest':
+                tree_predictions = [
+                    float(tree.predict(encoded)[0]) * capacity for tree in estimator.estimators_
+                ]
+                steps = [
+                    'Encode the facility and weekday, then combine them with occupancy, lags, capacity, and hour.',
+                    f'Each of {len(tree_predictions)} trained trees predicts an occupancy fraction.',
+                    'Average the tree predictions and multiply by facility capacity.',
+                    'Bound the final count between zero and capacity.',
+                ]
+            else:
+                steps = [
+                    'Encode the facility and weekday, then combine them with occupancy, lags, capacity, and hour.',
+                    'Apply the learned regression coefficients to estimate the occupancy fraction.',
+                    'Multiply by facility capacity and bound the count between zero and capacity.',
+                ]
         return {
             'source': SOURCE,
             'timezone': TIMEZONE,
@@ -117,6 +150,10 @@ class HistoricalReplay:
             'actual_free_spaces': None if actual is None else capacity - actual,
             'history': history,
             'metrics': self.metrics.copy(),
+            'explanation': ForecastExplanation(
+                inputs=inputs, steps=steps, tree_predictions=tree_predictions,
+                raw_occupied=raw_occupied,
+            ).model_dump(),
         }
 
 

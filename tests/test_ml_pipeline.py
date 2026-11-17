@@ -88,6 +88,20 @@ def test_training_and_replay_reveal_only_at_target(readings_csv: Path, tmp_path:
     replay = load_replay(directory)
     assert [entry['facility_id'] for entry in replay.catalog()['facilities']] == ['A', 'B']
     forecast = replay.forecast('A')
+    explanation = forecast['explanation']
+    assert explanation['inputs'][0]['value'] == 'A'
+    assert explanation['steps']
+    for model_name, model in bundle['models'].items():
+        replay.model_name = model_name
+        replay.model = model
+        explained = replay.forecast('A')
+        raw = explained['explanation']['raw_occupied']
+        assert explained['predicted_occupancy'] == pytest.approx(max(0, min(20, raw)))
+        if model_name == 'Random Forest':
+            votes = explained['explanation']['tree_predictions']
+            assert len(votes) == len(model.named_steps['model'].estimators_)
+            assert sum(votes) / len(votes) == pytest.approx(raw)
+    replay = load_replay(directory)
     assert forecast['source'] == 'uci_parking_birmingham'
     assert forecast['as_of'] == forecast['reference_at']
     assert forecast['actual_occupancy'] is None

@@ -23,6 +23,8 @@ def test_live_forecast_tracks_events_in_an_existing_database(tmp_path: Path) -> 
         before = client.get(url, params=params).json()
         assert before['estimated_free'] == 20
         assert before['model'] == 'Persistence'
+        assert before['explanation']['inputs'][0]['value'] == '0 of 20'
+        assert before['explanation']['raw_occupied'] == 0
         assert client.post('/simulation/arrival').status_code == 201
         forecast = client.get(url, params=params).json()
         assert forecast['estimated_occupied'] == 1
@@ -92,6 +94,7 @@ def test_calendar_uses_only_approved_horizons_and_labels_its_source(tmp_path: Pa
         assert forecast['source'] == 'simulated_calendar'
         assert forecast['current_occupied'] == 0
         assert forecast['estimated_free'] == 8
+        assert forecast['explanation']['inputs'][-1]['value'] == '12 occupied'
         assert client.get(url, params={
             'arrival_at': (now + timedelta(days=2)).isoformat(),
         }).status_code == 422
