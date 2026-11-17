@@ -106,6 +106,13 @@ In **Live Lot → Plan your arrival**, select the facility, date, and time in
 your device's timezone. The estimate refreshes as the lot changes. The map
 continues to show the current state of each bay.
 
+The arrival result includes a capacity diagram that illustrates the estimated
+free and occupied counts. Its positions represent aggregate capacity. The
+**How this forecast works** panel shows the inputs and calculation for that
+selection. In **Insights**, the Birmingham replay also shows each trained
+Random Forest tree's prediction and their average when Random Forest is the
+selected model.
+
 For the next 30 minutes, the forecast is available out of the box and uses
 persistence, carrying forward occupancy from the current SQLite state. The API
 can reconstruct five-minute lags and recent counts from the event ledger.

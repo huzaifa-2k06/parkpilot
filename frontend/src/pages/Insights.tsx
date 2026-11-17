@@ -7,6 +7,7 @@ import {
 import { getAnalytics, getFacilities, getForecast } from '../api/parking'
 import type { Analytics, Forecast } from '../api/parking'
 import { Icon } from '../components/Icon'
+import { ForecastProcess } from '../components/ForecastProcess'
 
 const chartColors = {
   recorded: 'var(--color-accent)',
@@ -240,6 +241,8 @@ function ForecastReplay() {
             <span>Measured on Birmingham’s historical holdout data.</span>
           </div>
         </div> : <p className="quiet-state" role="status">Loading the historical forecast…</p>}
+        {result?.explanation && <ForecastProcess explanation={result.explanation} model={result.model_name}
+          occupied={result.predicted_occupancy} capacity={result.capacity} />}
       </>}
   </section>
 }

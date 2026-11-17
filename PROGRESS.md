@@ -1,6 +1,6 @@
 # ParkPilot progress
 
-Updated 2026-11-17 (Asia/Karachi). Current branch is `feat/live-forecast`.
+Updated 2026-11-17 (Asia/Karachi). Current branch is `feat/forecast-visualization`.
 
 | Workstream | Owner | Status |
 | --- | --- | --- |
@@ -10,6 +10,7 @@ Updated 2026-11-17 (Asia/Karachi). Current branch is `feat/live-forecast`.
 | Phases 5–6 · ML pipeline and forecast comparison | `ml_pipeline` | Implemented and verified on official UCI data. Models, evaluation, replay, notebook, and [ML guide](ml/README.md) are ready. |
 | Phase 7 · Setup, demo, and integration checks | Root | [Setup and demo instructions](README.md) verified. All planned checks passed. [Integration PR #3](https://github.com/huzaifa-2k06/parkpilot/pull/3) is open for review. |
 | Arrival-time forecast | Root | Live Lot picker and API verified. Persistence serves up to 30 minutes. Held-out seasonal scenarios cleared both calendar horizons through seven days. [PR #4](https://github.com/huzaifa-2k06/parkpilot/pull/4) |
+| Forecast visualization | Root | Added an illustrative capacity diagram for arrival estimates and input-to-output explanations for both forecasting paths. Birmingham explanations include actual predictions from all 120 trees. 34 tests, production build, and desktop/mobile Chrome checks passed. |
 
 ## Verification
 
