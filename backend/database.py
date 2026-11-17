@@ -4,8 +4,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
 from typing import Iterator
+from uuid import uuid4
 
-from backend.schemas import ParkingEventRequest
+from backend.analytics import summarize_events
+from backend.schemas import EventType, ParkingAnalytics, ParkingEventRequest
 
 
 class UnknownSpaceError(Exception):
@@ -70,32 +72,63 @@ class Database:
             return [dict(row) for row in connection.execute(
                 'SELECT * FROM parking_events ORDER BY event_id DESC LIMIT ?', (limit,))]
 
+    def analytics(self) -> ParkingAnalytics:
+        with self.connection() as connection:
+            space_ids = [
+                row['space_id'] for row in connection.execute(
+                    'SELECT space_id FROM parking_spaces ORDER BY space_id')
+            ]
+            events = connection.execute(
+                'SELECT space_id, event_type, timestamp FROM parking_events ORDER BY event_id'
+            )
+            return summarize_events(space_ids, events)
+
     def record_event(self, event: ParkingEventRequest) -> dict:
         with self.connection() as connection:
             # Reserve the writer before reading, so concurrent requests cannot
             # both validate against the same old state.
             connection.execute('BEGIN IMMEDIATE')
+            return self._record_event(connection, event)
+
+    def record_manual_event(self, event_type: EventType) -> dict:
+        status = 'available' if event_type == 'SPACE_OCCUPIED' else 'occupied'
+        with self.connection() as connection:
+            connection.execute('BEGIN IMMEDIATE')
             row = connection.execute(
-                'SELECT status FROM parking_spaces WHERE space_id = ?',
-                (event.space_id,),
+                '''SELECT space_id, vehicle_id FROM parking_spaces
+                   WHERE status = ? ORDER BY RANDOM() LIMIT 1''',
+                (status,),
             ).fetchone()
             if row is None:
-                raise UnknownSpaceError(f'Unknown space: {event.space_id}')
-            status = 'occupied' if event.event_type == 'SPACE_OCCUPIED' else 'available'
-            if row['status'] == status:
-                raise InvalidTransitionError(f'{event.space_id} is already {status}')
-            now = utc_now()
-            connection.execute(
-                '''UPDATE parking_spaces SET status = ?, vehicle_id = ?, last_updated = ?
-                   WHERE space_id = ?''',
-                (status, event.vehicle_id if status == 'occupied' else None, now, event.space_id),
+                raise InvalidTransitionError(f'No {status} space for this event')
+            event = ParkingEventRequest(
+                space_id=row['space_id'],
+                event_type=event_type,
+                vehicle_id=row['vehicle_id'] or f'CAR_{uuid4().hex[:12].upper()}',
             )
-            cursor = connection.execute(
-                '''INSERT INTO parking_events (space_id, event_type, vehicle_id, timestamp)
-                   VALUES (?, ?, ?, ?)''',
-                (event.space_id, event.event_type, event.vehicle_id, now),
-            )
-            result = dict(connection.execute(
-                'SELECT * FROM parking_events WHERE event_id = ?', (cursor.lastrowid,)
-            ).fetchone())
-        return result
+            return self._record_event(connection, event)
+
+    def _record_event(self, connection: sqlite3.Connection, event: ParkingEventRequest) -> dict:
+        row = connection.execute(
+            'SELECT status FROM parking_spaces WHERE space_id = ?',
+            (event.space_id,),
+        ).fetchone()
+        if row is None:
+            raise UnknownSpaceError(f'Unknown space: {event.space_id}')
+        status = 'occupied' if event.event_type == 'SPACE_OCCUPIED' else 'available'
+        if row['status'] == status:
+            raise InvalidTransitionError(f'{event.space_id} is already {status}')
+        now = utc_now()
+        connection.execute(
+            '''UPDATE parking_spaces SET status = ?, vehicle_id = ?, last_updated = ?
+               WHERE space_id = ?''',
+            (status, event.vehicle_id if status == 'occupied' else None, now, event.space_id),
+        )
+        cursor = connection.execute(
+            '''INSERT INTO parking_events (space_id, event_type, vehicle_id, timestamp)
+               VALUES (?, ?, ?, ?)''',
+            (event.space_id, event.event_type, event.vehicle_id, now),
+        )
+        return dict(connection.execute(
+            'SELECT * FROM parking_events WHERE event_id = ?', (cursor.lastrowid,)
+        ).fetchone())
