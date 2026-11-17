@@ -254,6 +254,8 @@ export function Insights() {
     refetchInterval: 5000,
   })
   return <div className="insights-page">
+    <div className="section-heading forecast-heading"><h2>Historical occupancy forecast</h2></div>
+    <ForecastReplay />
     <div className="section-heading">
       <h2>Simulated lot activity</h2>
       <a className="text-button" href="#events">View events <Icon name="arrowRight" size={17} /></a>
@@ -267,7 +269,6 @@ export function Insights() {
         <span>Send a parking event to fill the analytics charts.</span>
         <a className="button secondary" href="#simulate">Open simulation</a>
       </div> : <AnalyticsCharts analytics={analytics.data} />}
-    <div className="section-heading forecast-heading"><h2>Historical occupancy forecast</h2></div>
-    <ForecastReplay />
+
   </div>
 }
