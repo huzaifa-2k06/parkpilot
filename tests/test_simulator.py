@@ -47,6 +47,8 @@ def test_automatic_mode_honors_start_and_stop(monkeypatch: pytest.MonkeyPatch) -
     def respond(request: httpx.Request) -> httpx.Response:
         if request.url.path == '/simulation/status':
             return httpx.Response(200, json={'running': next(states)})
+        if request.url.path == '/simulation/speed':
+            return httpx.Response(200, json={'speed': 2.0})
         if request.url.path == '/parking-spaces':
             return httpx.Response(200, json=[
                 {'space_id': 'P01', 'status': 'available', 'vehicle_id': None},
@@ -67,4 +69,4 @@ def test_automatic_mode_honors_start_and_stop(monkeypatch: pytest.MonkeyPatch) -
 
     assert len(events) == 1
     assert events[0]['event_type'] == 'SPACE_OCCUPIED'
-    assert 2 <= delays[1] <= 5
+    assert 1 <= delays[1] <= 2.5

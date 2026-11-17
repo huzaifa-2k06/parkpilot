@@ -78,9 +78,11 @@ def run_automatic(client: httpx.Client) -> None:
             if simulation_running(client):
                 event = read_event_candidate(client, 'auto')
                 # Stop may have been requested while the lot state was fetched.
-                if event is not None and simulation_running(client):
-                    delay = random.uniform(MIN_EVENT_INTERVAL, MAX_EVENT_INTERVAL)
-                    send_event(client, event)
+                if event is not None:
+                    speed = client.get('/simulation/speed').raise_for_status().json()['speed']
+                    if simulation_running(client):
+                        delay = random.uniform(MIN_EVENT_INTERVAL, MAX_EVENT_INTERVAL) / speed
+                        send_event(client, event)
         except httpx.HTTPError as error:
             print(f'ParkPilot API request failed: {error}', file=sys.stderr, flush=True)
             delay = max(delay, MIN_EVENT_INTERVAL)

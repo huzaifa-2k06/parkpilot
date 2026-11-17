@@ -134,3 +134,61 @@ def test_simulation_controls(api) -> None:
         assert client.get('/simulation/status').json() == {'running': running}
     assert client.get('/parking-spaces').json() == before
     assert client.get('/events').json() == []
+
+
+def test_manual_simulation_records_arrival_and_departure(api) -> None:
+    client, _ = api
+    assert client.post('/simulation/departure').status_code == 409
+
+    arrival_response = client.post('/simulation/arrival')
+    assert arrival_response.status_code == 201
+    arrival = arrival_response.json()
+    departure_response = client.post('/simulation/departure')
+    assert departure_response.status_code == 201
+    departure = departure_response.json()
+
+    assert arrival['event_type'] == 'SPACE_OCCUPIED'
+    assert departure['event_type'] == 'SPACE_AVAILABLE'
+    assert arrival['space_id'] == departure['space_id']
+    assert arrival['vehicle_id'] == departure['vehicle_id']
+    assert client.get('/events?limit=2').json() == [departure, arrival]
+
+
+def test_simulation_speed(api) -> None:
+    client, _ = api
+    assert client.get('/simulation/speed').json() == {'speed': 1.0}
+    assert client.post('/simulation/speed', json={'speed': 1.5}).json() == {'speed': 1.5}
+    assert client.post('/simulation/speed', json={'speed': 3}).status_code == 422
+    assert client.get('/simulation/speed').json() == {'speed': 1.5}
+
+
+def test_analytics_reconstructs_occupancy_from_recorded_events(api) -> None:
+    client, _ = api
+    assert client.get('/analytics').json()['points'] == []
+    for event_type, space_id in [
+        ('SPACE_OCCUPIED', 'P01'), ('SPACE_OCCUPIED', 'P02'), ('SPACE_AVAILABLE', 'P01'),
+    ]:
+        assert send(client, event_type, space_id).status_code == 201
+
+    response = client.get('/analytics')
+    assert response.status_code == 200
+    summary = response.json()
+    assert summary['capacity'] == 20
+    assert [point['occupied'] for point in summary['points']] == [1, 2, 1]
+    assert summary['total_arrivals'] == 2
+    assert summary['total_departures'] == 1
+    assert sum(hour['arrivals'] for hour in summary['hourly']) == 2
+    assert sum(hour['departures'] for hour in summary['hourly']) == 1
+    assert summary['spaces'][:3] == [
+        {'space_id': 'P01', 'arrivals': 1},
+        {'space_id': 'P02', 'arrivals': 1},
+        {'space_id': 'P03', 'arrivals': 0},
+    ]
+
+
+def test_live_api_works_without_trained_forecast(tmp_path) -> None:
+    app = create_app(tmp_path / 'parking.db', forecast_artifact_dir=tmp_path / 'empty')
+    with TestClient(app) as client:
+        for path in ['/forecast/facilities', '/forecast']:
+            assert client.get(path).status_code == 503
+        assert len(client.get('/parking-spaces').json()) == 20
