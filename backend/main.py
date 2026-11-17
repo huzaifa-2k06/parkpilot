@@ -1,5 +1,6 @@
 """Parking API and simulation controls."""
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import AsyncIterator
 import logging
@@ -12,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from backend.database import Database, InvalidTransitionError, UnknownSpaceError
 from backend.forecast import forecast_router
+from backend.live_forecast import live_forecast_router
 from backend.schemas import (
     ErrorResponse,
     ParkingAnalytics,
@@ -30,6 +32,7 @@ EVENT_WRITE_ERRORS = {409: {'model': ErrorResponse}, 500: {'model': ErrorRespons
 def create_app(
     database_path: Path | str | None = None,
     forecast_artifact_dir: Path | None = None,
+    live_forecast_path: Path | None = None,
 ) -> FastAPI:
     database = Database(Path(database_path) if database_path is not None else
                         Path(os.environ.get('PARKPILOT_DB_PATH', str(DEFAULT_DATABASE))))
@@ -38,11 +41,14 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         database.initialize()
         app.state.simulation_running = False
+        app.state.simulation_started_at = None
         app.state.simulation_speed = 1.0
         yield
 
     app = FastAPI(title='ParkPilot', lifespan=lifespan)
     app.include_router(forecast_router(forecast_artifact_dir))
+    app.include_router(live_forecast_router(database, live_forecast_path) if live_forecast_path
+                       else live_forecast_router(database))
     app.add_middleware(
         CORSMiddleware, allow_origins=['http://localhost:5173'],
         allow_methods=['GET', 'POST'], allow_headers=['Content-Type'],
@@ -98,12 +104,15 @@ def create_app(
 
     @app.post('/simulation/start')
     async def start_simulation() -> SimulationStatus:
+        if not app.state.simulation_running:
+            app.state.simulation_started_at = datetime.now(timezone.utc)
         app.state.simulation_running = True
         return await simulation_status()
 
     @app.post('/simulation/stop')
     async def stop_simulation() -> SimulationStatus:
         app.state.simulation_running = False
+        app.state.simulation_started_at = None
         return await simulation_status()
 
     @app.get('/simulation/speed')

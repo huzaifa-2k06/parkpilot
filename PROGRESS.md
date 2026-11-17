@@ -1,6 +1,6 @@
 # ParkPilot progress
 
-Updated 2026-11-17 (Asia/Karachi). Current branch is `feat/live-parking-ml`.
+Updated 2026-11-17 (Asia/Karachi). Current branch is `feat/live-forecast`.
 
 | Workstream | Owner | Status |
 | --- | --- | --- |
@@ -9,6 +9,7 @@ Updated 2026-11-17 (Asia/Karachi). Current branch is `feat/live-parking-ml`.
 | Phases 3–4 · Live lot, simulation controls, event analytics | `live_parking` | Implemented and verified in Chrome. The dashboard shows 20 bays, animated transitions, manual and automatic controls, history, and recorded analytics. |
 | Phases 5–6 · ML pipeline and forecast comparison | `ml_pipeline` | Implemented and verified on official UCI data. Models, evaluation, replay, notebook, and [ML guide](ml/README.md) are ready. |
 | Phase 7 · Setup, demo, and integration checks | Root | [Setup and demo instructions](README.md) verified. All planned checks passed. [Integration PR #3](https://github.com/huzaifa-2k06/parkpilot/pull/3) is open for review. |
+| Arrival-time forecast | Root | Live Lot picker and API verified. Persistence serves up to 30 minutes. Held-out seasonal scenarios cleared both calendar horizons through seven days. [PR #4](https://github.com/huzaifa-2k06/parkpilot/pull/4) |
 
 ## Verification
 
@@ -23,6 +24,8 @@ Updated 2026-11-17 (Asia/Karachi). Current branch is `feat/live-parking-ml`.
 - [x] Verify live controls, occupancy analytics, and the saved forecast over HTTP, including actual reveal at the historical target time.
 - [x] Document setup and the demo sequence.
 - [x] Complete the demo checks and open the integration PR.
+- [x] Arrival forecast · 34 Python tests, Vite build, and Chrome checks including a two-day estimate and 390 px layout.
+- [x] Reproduce simulated forecast metrics with `python -m ml.live_forecast`. Persistence remains in service through 30 minutes because the held-out observations contained zero full-lot targets. The calendar baseline serves both longer bands.
 
 PR #3 includes the commits from Phase 1 and Phase 2 while those PRs are open.
 The downloaded dataset, saved model bundle, and evaluation metadata are

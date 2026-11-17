@@ -38,6 +38,26 @@ export type Facilities = {
   facilities: Facility[]
 }
 
+export type LiveFacility = {
+  id: string
+  name: string
+  max_horizon_minutes: number
+}
+
+export type LiveForecast = {
+  facility_id: string
+  capacity: number
+  arrival_at: string
+  observed_at: string
+  last_change_at: string
+  horizon_minutes: number
+  current_occupied: number
+  estimated_occupied: number
+  estimated_free: number
+  model: string
+  source: 'live_simulation' | 'simulated_calendar'
+}
+
 export type Forecast = {
   source: 'uci_parking_birmingham'
   facility_id: string
@@ -96,6 +116,12 @@ export const getSpeed = (signal: AbortSignal): Promise<SimulationSpeed> =>
 
 export const getAnalytics = (signal: AbortSignal): Promise<Analytics> =>
   request('/analytics', { signal })
+
+export const getLiveFacilities = (signal: AbortSignal): Promise<LiveFacility[]> =>
+  request('/live-forecast/facilities', { signal })
+
+export const getLiveForecast = (facility: string, arrivalAt: string, signal: AbortSignal): Promise<LiveForecast> =>
+  request(`/live-forecast/${encodeURIComponent(facility)}?${new URLSearchParams({ arrival_at: arrivalAt })}`, { signal })
 
 export const getFacilities = (signal: AbortSignal): Promise<Facilities> =>
   request('/forecast/facilities', { signal })

@@ -2,6 +2,7 @@ data/parking.db
 data/parking.db-*
 data/birmingham/
 data/ml/
+data/live_forecast/
 .env
 .env.*
 !.env.example

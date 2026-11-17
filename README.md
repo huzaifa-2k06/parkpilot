@@ -53,6 +53,7 @@ override it. The dashboard must be served from the configured CORS origin.
 - `POST /simulation/arrival` and `POST /simulation/departure` record one event, or return 409 if no bay is eligible.
 - `GET /simulation/speed` returns the worker's speed multiplier. Set it with `POST /simulation/speed` and a body of `{"speed": 1.5}`. The range is 0.5–2 and the default is 1.
 - `GET /analytics` returns recorded simulated occupancy, hourly events in UTC, and arrivals per bay.
+- `GET /live-forecast/facilities` lists the demo lot and its supported horizon. `GET /live-forecast/parkpilot-demo?arrival_at=...` takes an ISO 8601 timestamp with an offset and returns the arrival estimate, method, and observation time.
 - `GET /forecast/facilities` lists held-out Birmingham replay references. `GET /forecast` accepts `facility_id`, `reference_at`, and `as_of` for the replay.
 
 ```sh
@@ -98,6 +99,42 @@ Manual commands work while automatic mode is paused. Each command picks an
 eligible bay and prints the accepted event. A departure uses the parked
 vehicle's ID. The command exits with a message if no eligible bay exists.
 Use `--api-url` or `PARKPILOT_API_URL` to override `http://localhost:8000`.
+
+## Forecast an arrival at the demo lot
+
+In **Live Lot → Plan your arrival**, select the facility, date, and time in
+your device's timezone. The estimate refreshes as the lot changes. The map
+continues to show the current state of each bay.
+
+For the next 30 minutes, the forecast is available out of the box and uses
+persistence, carrying forward occupancy from the current SQLite state. The API
+can reconstruct five-minute lags and recent counts from the event ledger.
+An enabled simulator feed with no accepted events for one minute returns
+a stale-data message. With automatic mode paused, manual events continue to
+update the estimate.
+
+To evaluate simulated forecasts and enable calendar estimates, run:
+
+```sh
+python -m ml.live_forecast
+```
+
+This writes `data/live_forecast/forecast.json` with validation and held-out
+metrics. The simulator scenarios approximate the automatic worker's random
+event policy for short ranges and use separate seasonal runs with weekday
+demand and vehicle dwell times for longer ranges. The latter estimates use
+UTC weekday and hour to look up expected occupancy.
+
+The evaluated calendar baseline enables estimates beyond 30 minutes and up
+to seven days. It uses simulated calendar demand rather than projecting the
+current occupancy forward for days. At the 30-minute mark, regression reduced
+MAE from 2.42 to about 1.72 spaces, but the held-out runs contained no full-lot
+targets, so persistence remains the live method. For the two longer bands,
+calendar MAE was 1.92 and 1.96 spaces. Calendar forecasts still showed free
+spaces in roughly 49% of held-out full-lot cases, so availability is an
+estimate. These results describe the scenario generator and do not establish
+accuracy on a real facility. The live forecast and the Birmingham replay use
+separate artifacts and routes.
 
 ## Train and replay a forecast
 

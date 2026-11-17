@@ -1,6 +1,7 @@
 """SQLite persistence; state transitions and event history commit together."""
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sqlite3
 from typing import Iterator
@@ -20,6 +21,17 @@ class InvalidTransitionError(Exception):
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+@dataclass(frozen=True)
+class OccupancyHistory:
+    capacity: int
+    observed_at: datetime
+    last_change_at: datetime
+    snapshots: list[int]
+    arrivals: int
+    departures: int
+    has_lookback: bool
 
 
 class Database:
@@ -82,6 +94,49 @@ class Database:
                 'SELECT space_id, event_type, timestamp FROM parking_events ORDER BY event_id'
             )
             return summarize_events(space_ids, events)
+
+    def occupancy_history(self, step: timedelta, steps: int) -> OccupancyHistory:
+        """Read current occupancy and rewind accepted events from the same SQLite snapshot."""
+        with self.connection() as connection:
+            connection.execute('BEGIN')
+            summary = connection.execute(
+                """SELECT COUNT(*) AS capacity, SUM(status = 'occupied') AS occupied,
+                          MAX(last_updated) AS last_change, MIN(last_updated) AS earliest_space,
+                          (SELECT timestamp FROM parking_events ORDER BY event_id LIMIT 1) AS first_event
+                   FROM parking_spaces"""
+            ).fetchone()
+            observed_at = datetime.now(timezone.utc)
+            oldest = observed_at - step * steps
+            events = iter(connection.execute(
+                """SELECT event_type, timestamp FROM parking_events
+                   WHERE timestamp > ? ORDER BY timestamp DESC, event_id DESC""",
+                (oldest.isoformat(),),
+            ))
+            occupied = int(summary['occupied'])
+            snapshots = [occupied]
+            arrivals = departures = 0
+            event = next(events, None)
+            for index in range(1, steps + 1):
+                boundary = observed_at - step * index
+                while event is not None and datetime.fromisoformat(event['timestamp']) > boundary:
+                    if event['event_type'] == 'SPACE_OCCUPIED':
+                        occupied -= 1
+                        arrivals += 1
+                    else:
+                        occupied += 1
+                        departures += 1
+                    event = next(events, None)
+                snapshots.append(occupied)
+            earliest = min(value for value in (summary['earliest_space'], summary['first_event']) if value)
+            return OccupancyHistory(
+                capacity=summary['capacity'],
+                observed_at=observed_at,
+                last_change_at=datetime.fromisoformat(summary['last_change']),
+                snapshots=snapshots,
+                arrivals=arrivals,
+                departures=departures,
+                has_lookback=datetime.fromisoformat(earliest) <= oldest,
+            )
 
     def record_event(self, event: ParkingEventRequest) -> dict:
         with self.connection() as connection:
