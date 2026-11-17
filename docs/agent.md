@@ -8,7 +8,7 @@ Local web app that simulates a 20-space parking lot (P01–P20). Simulator sends
 
 ## Stack
 
-**Backend, simulator, ML:** Python, FastAPI + Uvicorn, SQLite (stdlib `sqlite3`), Requests, Pandas, NumPy, Scikit-learn, Joblib.
+**Backend, simulator, ML:** Python, FastAPI + Uvicorn, SQLite (stdlib `sqlite3`), HTTPX, Pandas, NumPy, Scikit-learn, Joblib.
 **Frontend:** React + Vite + TypeScript, Tailwind CSS, Framer Motion, Recharts, TanStack Query. No Streamlit.
 Do not add other frameworks or services without asking.
 

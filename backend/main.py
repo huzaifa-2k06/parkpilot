@@ -1,4 +1,4 @@
-"""Phase 1 parking API and simulation controls."""
+"""Parking API and simulation controls."""
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
@@ -60,15 +60,19 @@ def create_app(database_path: Path | str | None = None) -> FastAPI:
             logger.exception('Unable to persist parking event')
             raise HTTPException(status_code=500, detail='Unable to persist parking event') from error
 
+    @app.get('/simulation/status')
+    async def simulation_status() -> SimulationStatus:
+        return SimulationStatus(running=app.state.simulation_running)
+
     @app.post('/simulation/start')
     async def start_simulation() -> SimulationStatus:
         app.state.simulation_running = True
-        return SimulationStatus(running=app.state.simulation_running)
+        return await simulation_status()
 
     @app.post('/simulation/stop')
     async def stop_simulation() -> SimulationStatus:
         app.state.simulation_running = False
-        return SimulationStatus(running=app.state.simulation_running)
+        return await simulation_status()
 
     return app
 
