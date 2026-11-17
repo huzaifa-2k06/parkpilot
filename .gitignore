@@ -1,9 +1,12 @@
 data/parking.db
 data/parking.db-*
+data/birmingham/
+data/ml/
 .env
 .env.*
 !.env.example
 node_modules/
+frontend/dist/
 __pycache__/
 *.py[cod]
 .venv/
