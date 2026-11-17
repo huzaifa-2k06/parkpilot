@@ -1,12 +1,14 @@
-# ParkPilot — backend and simulator
+# ParkPilot
 
-FastAPI + SQLite API for a simulated 20-space parking lot. Project rules,
-requirements, and design are in `docs/agent.md`, `docs/prd (1).md`, and
-`docs/design.md`. Tested with Python 3.11 and 3.12.
+ParkPilot simulates a 20-space parking lot and displays live occupancy, vehicle
+movements, and event analytics in a React dashboard. A separate historical
+replay evaluates a 30-minute occupancy forecast on the Birmingham dataset.
+See [progress](PROGRESS.md) and the project specs under `docs/`.
 
 ## Setup and run
 
-From the repository root on macOS or Linux:
+Use Python 3.11 or 3.12 and Node.js 22.12+ (or 20.19+). From the repository
+root on macOS or Linux:
 
 ```sh
 python3 -m venv .venv
@@ -29,6 +31,18 @@ preserves occupancy and event history. `PARKPILOT_DB_PATH` optionally selects
 another database file. Do not delete an existing database to restart the API.
 CORS permits `http://localhost:5173`.
 
+In a second terminal, start the dashboard:
+
+```sh
+cd frontend
+npm ci
+npm run dev
+```
+
+Open `http://localhost:5173`. The dashboard defaults to
+`http://localhost:8000` for its API. Set `VITE_API_URL` in `frontend/.env` to
+override it. The dashboard must be served from the configured CORS origin.
+
 ## API
 
 - `GET /parking-spaces`: all spaces ordered by ID; statuses are `available` or `occupied`.
@@ -36,6 +50,10 @@ CORS permits `http://localhost:5173`.
 - `POST /webhook/parking-event`: accepts the payload below; returns the recorded event with HTTP 201.
 - `GET /simulation/status` returns whether automatic mode is enabled.
 - `POST /simulation/start` and `POST /simulation/stop` enable or pause the simulator. They return `{"running": true}` or `{"running": false}`. The API resets to stopped on restart.
+- `POST /simulation/arrival` and `POST /simulation/departure` record one event, or return 409 if no bay is eligible.
+- `GET /simulation/speed` returns the worker's speed multiplier. Set it with `POST /simulation/speed` and a body of `{"speed": 1.5}`. The range is 0.5–2 and the default is 1.
+- `GET /analytics` returns recorded simulated occupancy, hourly events in UTC, and arrivals per bay.
+- `GET /forecast/facilities` lists held-out Birmingham replay references. `GET /forecast` accepts `facility_id`, `reference_at`, and `as_of` for the replay.
 
 ```sh
 curl -X POST http://localhost:8000/webhook/parking-event \
@@ -56,18 +74,18 @@ are UTC ISO 8601 strings. There are no extra vehicle matching or uniqueness rule
 
 ## Simulator
 
-Start the API, then run the automatic simulator in a second terminal from the repository root:
+Start the API, then run the automatic simulator in another terminal from the repository root:
 
 ```sh
 python -m simulator.simulator
 ```
 
 In PowerShell, use `.\.venv\Scripts\python.exe` in place of `python`.
-The simulator waits for the API to enable automatic mode. Use the interactive
-API docs at `http://localhost:8000/docs` to send `POST /simulation/start` and
-`POST /simulation/stop`. While enabled, it reads current occupancy and sends
-events 2–5 seconds apart. Stop pauses the worker. A webhook already in flight
-can still complete. Press Ctrl+C in the simulator terminal to exit.
+On the dashboard's **Simulate** page, start or pause automatic mode and adjust
+its speed. At 1× the worker reads current occupancy and sends events 2–5
+seconds apart. A webhook already in flight can still complete after a pause.
+Press Ctrl+C in the simulator terminal to exit. Manual controls in the
+dashboard are available with just the API running.
 
 To send one event, run either command while the API is up:
 
@@ -81,6 +99,38 @@ eligible bay and prints the accepted event. A departure uses the parked
 vehicle's ID. The command exits with a message if no eligible bay exists.
 Use `--api-url` or `PARKPILOT_API_URL` to override `http://localhost:8000`.
 
+## Train and replay a forecast
+
+From the repository root with the virtual environment active:
+
+```sh
+python -m ml.train
+python -m ml.evaluate
+python -m ml.predict
+```
+
+Training caches the official [UCI Parking Birmingham dataset](https://archive.ics.uci.edu/dataset/482/parking%2Bbirmingham)
+in `data/birmingham/` and saves the trained bundle and evaluation metadata in
+`data/ml/`. These files are generated locally. If the API already loaded a
+previous bundle, restart it after retraining. See [the ML guide](ml/README.md)
+for chronology, sampling, and the evaluation procedure.
+
+In **Insights**, select a Birmingham facility and a held-out reference time.
+The dashed forecast estimates occupancy 30 minutes ahead. Advance the replay
+to the target to reveal the corresponding recorded observation. The data
+cover daytime samples from Birmingham in October–December 2016. The model's
+held-out results apply to that dataset. Live occupancy and event analytics
+come from the simulated 20-space lot.
+
+## Demo
+
+1. Open **Live Lot** and confirm all 20 bays are shown.
+2. Open **Simulate**, start the worker, watch a vehicle arrive, and pause it.
+3. Send a manual arrival and departure and check their webhook responses.
+4. Open **Insights** and inspect simulated occupancy and arrival counts.
+5. Load a Birmingham replay and advance to the target time to compare the
+   forecast with the recorded result.
+
 ## Tests
 
 ```sh
@@ -89,16 +139,11 @@ pytest -q
 ```
 
 On Windows, run `.\.venv\Scripts\python.exe -m pytest -q` from the repository root.
+Run `npm run build` inside `frontend/` to type-check and build the dashboard.
 
 Tests use temporary databases, covering automatic seeding, persistence after
 restart, valid/duplicate transitions, unknown spaces, payload validation,
 forced insert failure rollback, concurrent arrivals, history limits, CORS,
-and the simulation controls. Simulator tests exercise candidate selection and
-automatic pause/resume over mocked HTTP. The pinned Starlette release emits an
-HTTPX TestClient deprecation warning; tests still run with approved HTTPX.
-
-`requirements.txt` pins the four approved direct dependencies (FastAPI,
-Uvicorn, pytest, HTTPX) and their resolved transitive dependencies.
-
-`frontend/` and `ml/` are placeholders. The React dashboard, analytics, ML
-training, evaluation, and forecasts remain for later phases.
+simulation controls, and analytics. ML tests cover causal alignment,
+chronological splitting, and replay availability. The pinned Starlette
+release emits an HTTPX TestClient deprecation warning.
