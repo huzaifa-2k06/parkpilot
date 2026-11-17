@@ -3,6 +3,7 @@ import type { ParkingEvent, ParkingSpace } from '../api/parking'
 import { EventList } from '../components/Events'
 import { Icon } from '../components/Icon'
 import { Lot } from '../components/Lot'
+import { ArrivalForecast } from '../components/ArrivalForecast'
 
 function OccupancyRing({ percent }: { percent?: number }) {
   return <svg className="occupancy-ring" viewBox="0 0 52 52" aria-hidden="true">
@@ -70,6 +71,8 @@ export function LiveLot({ spaces, events }: { spaces?: ParkingSpace[]; events?: 
           </div>
         </div>
       </section>
+
+      <ArrivalForecast />
 
       <div className="live-side">
         <section className="card side-card spaces-card">
