@@ -6,8 +6,8 @@ import { EventList } from '../components/Events'
 import { Icon } from '../components/Icon'
 import { Lot } from '../components/Lot'
 
-export function Simulate({ spaces, events, running }: {
-  spaces?: ParkingSpace[]
+export function Simulate({ inspect, spaces, events, running }: {
+  inspect: (space: ParkingSpace) => void; spaces?: ParkingSpace[]
   events?: ParkingEvent[]
   running?: boolean
 }) {
@@ -44,7 +44,7 @@ export function Simulate({ spaces, events, running }: {
         <div><h2>Vehicle movement</h2><p>Accepted events appear on the lot</p></div>
         <span className="location-pill"><Icon name="simulate" size={17} /> Simulated lot</span>
       </div>
-      <Lot spaces={spaces} mode="simulate" />
+      <Lot inspect={inspect} spaces={spaces} mode="simulate" />
       <div className="control-dock">
         <h3>Automatic simulation</h3>
         <div className="control-buttons">

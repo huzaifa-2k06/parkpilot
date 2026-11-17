@@ -191,7 +191,7 @@ function Gate({ x, name, lifted, reduce }: { x: number; name: string; lifted: bo
   </g>
 }
 
-export function Lot({ spaces, mode = 'live' }: { spaces?: ParkingSpace[]; mode?: 'live' | 'simulate' }) {
+export function Lot({ spaces, inspect, mode = 'live' }: { inspect: (space: ParkingSpace) => void; spaces?: ParkingSpace[]; mode?: 'live' | 'simulate' }) {
   const motionState = useLotMotion(spaces)
   const reduce = useReducedMotion() ?? false
   const id = useId()
@@ -203,7 +203,7 @@ export function Lot({ spaces, mode = 'live' }: { spaces?: ParkingSpace[]; mode?:
     <div className={`lot-scene lot-${mode}`}>
       <div className="map-heading"><strong>ParkPilot Lot</strong><span>Gate A to Gate B</span></div>
       <div className="scene-perspective">
-        <svg className="lot-svg" viewBox="0 0 1060 427" role="img" aria-labelledby={title}>
+        <svg className="lot-svg" viewBox="0 0 1060 427" role="group" aria-labelledby={title}>
           <title id={title}>Twenty parking bays, with an entry on the left and an exit on the right</title>
           <defs>
             <pattern id={`concrete-${id}`} width="46" height="46" patternUnits="userSpaceOnUse">
@@ -260,6 +260,14 @@ export function Lot({ spaces, mode = 'live' }: { spaces?: ParkingSpace[]; mode?:
             return <g key={space.space_id} transform={`translate(${x} ${y}) rotate(${rotation})`}>
               <Car vehicle={space.vehicle_id} />
             </g>
+          })}
+          {motionState.spaces.filter(space => space.status === 'occupied' && trip?.next.space_id !== space.space_id).map(space => {
+            const { x, y } = bayOf(space.space_id)
+            return <rect key={space.space_id} className="bay-hit" x={x - 32} y={y - 32} width="64" height="64" rx="6"
+              role="button" tabIndex={0} aria-label={`Inspect ${space.vehicle_id} in ${space.space_id}`}
+              onClick={() => inspect(space)} onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); inspect(space) }
+              }} />
           })}
           {trip && <MovingCar key={trip.id} trip={trip} reduce={reduce} finish={finishTrip} />}
           {notice && <g transform={`translate(${bayOf(notice.next.space_id).x} ${bayOf(notice.next.space_id).top ? 80 : 261})`}
