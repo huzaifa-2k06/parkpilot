@@ -124,12 +124,13 @@ def test_limits_and_cors(api):
 def test_simulation_controls(api) -> None:
     client, _ = api
     before = client.get('/parking-spaces').json()
+    assert client.get('/simulation/status').json() == {'running': False}
     for action, running in [
         ('stop', False), ('start', True), ('start', True), ('stop', False),
     ]:
         response = client.post(f'/simulation/{action}')
         assert response.status_code == 200
         assert response.json() == {'running': running}
-        assert client.app.state.simulation_running is running
+        assert client.get('/simulation/status').json() == {'running': running}
     assert client.get('/parking-spaces').json() == before
     assert client.get('/events').json() == []
