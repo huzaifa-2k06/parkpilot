@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { getLiveFacilities, getLiveForecast } from '../api/parking'
+import { ForecastCapacityMap } from './ForecastCapacityMap'
+import { ForecastProcess } from './ForecastProcess'
 
 function toLocalFields(date: Date) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString()
@@ -90,13 +92,18 @@ export function ArrivalForecast() {
     </p>}
     {expired && <p className="quiet-state" role="status">This arrival time has passed. Choose a new time.</p>}
     {selection && !expired && forecast.isPending && <p className="quiet-state" role="status">Estimating availability…</p>}
-    {result && <div className="forecast-detail arrival-result">
+    {result && <>
+    <div className="forecast-detail arrival-result">
       <span className="stat-label">Estimated at arrival · {formatArrival.format(new Date(result.arrival_at))}</span>
       <strong role="status">{result.estimated_free} <small>of {result.capacity} spaces free</small></strong>
       <span>{result.estimated_occupied} estimated occupied · {Math.ceil(result.horizon_minutes)} min ahead</span>
       <span>{result.model} · {result.source === 'simulated_calendar'
         ? 'Simulated weekday and time pattern'
         : `Simulated occupancy read at ${formatObservation.format(new Date(result.observed_at))}`}</span>
-    </div>}
+    </div>
+    <ForecastCapacityMap capacity={result.capacity} occupied={result.estimated_occupied} />
+    {result.explanation && <ForecastProcess explanation={result.explanation} model={result.model}
+      capacity={result.capacity} occupied={result.estimated_occupied} />}
+    </>}
   </section>
 }

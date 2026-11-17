@@ -45,6 +45,7 @@ export type LiveFacility = {
 }
 
 export type LiveForecast = {
+  explanation: ForecastExplanation
   facility_id: string
   capacity: number
   arrival_at: string
@@ -59,6 +60,7 @@ export type LiveForecast = {
 }
 
 export type Forecast = {
+  explanation: ForecastExplanation
   source: 'uci_parking_birmingham'
   facility_id: string
   horizon_minutes: 30
@@ -74,6 +76,13 @@ export type Forecast = {
   actual_free_spaces: number | null
   history: { timestamp: string; occupancy: number }[]
   metrics: { mae: number; rmse: number; r2: number | null }
+}
+
+export type ForecastExplanation = {
+  inputs: { label: string; value: string }[]
+  steps: string[]
+  tree_predictions: number[]
+  raw_occupied: number
 }
 
 export class ApiError extends Error {

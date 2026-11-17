@@ -6,6 +6,7 @@ from typing import Literal, TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from ml.explanation import ForecastExplanation
 
 if TYPE_CHECKING:
     from ml.predict import HistoricalReplay
@@ -53,6 +54,7 @@ class Forecast(ForecastSource):
     actual_free_spaces: int | None
     history: list[HistoricalPoint]
     metrics: ForecastMetrics
+    explanation: ForecastExplanation
 
 
 def forecast_router(artifact_dir: Path | None = None) -> APIRouter:

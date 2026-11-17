@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from backend.database import Database
+from ml.explanation import ForecastExplanation, ForecastInput
 from ml.live_forecast import (
     DEFAULT_POLICY_PATH,
     DAY_MINUTES,
@@ -17,6 +18,7 @@ from ml.live_forecast import (
     WEEK_MINUTES,
     ModelName,
     choose_forecast,
+    calendar_slot,
     load_policy,
 )
 
@@ -43,6 +45,7 @@ class ArrivalForecast(BaseModel):
     estimated_free: int
     model: ModelName
     source: Literal['live_simulation', 'simulated_calendar']
+    explanation: ForecastExplanation
 
 
 def live_forecast_router(database: Database, policy_path: Path = DEFAULT_POLICY_PATH) -> APIRouter:
@@ -93,6 +96,40 @@ def live_forecast_router(database: Database, policy_path: Path = DEFAULT_POLICY_
             policy, history.capacity, history.snapshots,
             (history.arrivals, history.departures), target, minutes, speed,
         )
+        inputs = [
+            ForecastInput(label='Current occupancy', value=f'{history.snapshots[0]} of {history.capacity}'),
+            ForecastInput(label='Arrival (UTC)', value=target.strftime('%A %Y-%m-%d %H:%M')),
+            ForecastInput(label='Forecast horizon', value=f'{minutes:.1f} minutes'),
+        ]
+        if model == 'Persistence':
+            steps = [
+                'Read the latest accepted occupancy from the simulated lot.',
+                'Carry the current occupied count forward to the selected arrival time.',
+                f'Subtract {occupied} occupied from {history.capacity} total spaces.',
+            ]
+        elif model == 'Calendar baseline':
+            inputs.append(ForecastInput(
+                label='Matching weekday/hour estimate',
+                value=f'{policy.calendar_profile[calendar_slot(target)]} occupied',
+            ))
+            steps = [
+                'Use the arrival weekday and hour in UTC.',
+                'Look up the median occupancy learned from matching hours in simulated seasonal runs.',
+                f'Subtract {occupied} estimated occupied from {history.capacity} total spaces.',
+            ]
+        else:
+            steps = [
+                'Build the features used by the selected simulated-lot regression.',
+                'Apply the saved coefficients, round the estimate, and bound it to facility capacity.',
+                f'Subtract {occupied} estimated occupied from {history.capacity} total spaces.',
+            ]
+            if short:
+                inputs.extend([
+                    ForecastInput(label='Occupancy 5 / 10 / 15 minutes ago',
+                                  value=' / '.join(map(str, history.snapshots[1:]))),
+                    ForecastInput(label='Recent arrivals / departures',
+                                  value=f'{history.arrivals} / {history.departures}'),
+                ])
         return ArrivalForecast(
             facility_id=facility_id,
             capacity=history.capacity,
@@ -105,6 +142,7 @@ def live_forecast_router(database: Database, policy_path: Path = DEFAULT_POLICY_
             estimated_free=history.capacity - occupied,
             model=model,
             source='live_simulation' if short else 'simulated_calendar',
+            explanation=ForecastExplanation(inputs=inputs, steps=steps, raw_occupied=occupied),
         )
 
     return router
