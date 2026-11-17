@@ -46,16 +46,14 @@ export function Simulate({ spaces, events, running }: {
       </div>
       <Lot spaces={spaces} mode="simulate" />
       <div className="control-dock">
+        <h3>Automatic simulation</h3>
         <div className="control-buttons">
           <button className="button primary" type="button" disabled={running === undefined || controls.isPending}
             onClick={() => controls.mutate(!running)}>
             <Icon name={running ? 'pause' : 'play'} size={18} />
             {controls.isPending ? 'Updating…' : running ? 'Stop simulation' : 'Start simulation'}
           </button>
-          <button className="button secondary" type="button" disabled={manual.isPending}
-            onClick={() => manual.mutate('arrival')}><Icon name="arrowIn" size={18} /> Send arrival</button>
-          <button className="button secondary" type="button" disabled={manual.isPending}
-            onClick={() => manual.mutate('departure')}><Icon name="arrowOut" size={18} /> Send departure</button>
+
         </div>
         <div className="speed-control">
           <label htmlFor="simulation-speed">Auto speed <strong>{shownSpeed}×</strong></label>
@@ -71,7 +69,13 @@ export function Simulate({ spaces, events, running }: {
     </section>
     <aside className="simulation-side" aria-label="Simulator results">
       <section className="card side-card">
-        <div className="card-header"><div><h2>Manual response</h2><p>Latest arrival or departure request</p></div></div>
+        <div className="card-header"><div><h2>Manual events</h2></div></div>
+        <div className="control-buttons manual-actions">
+          <button className="button secondary" type="button" disabled={manual.isPending}
+            onClick={() => manual.mutate('arrival')}><Icon name="arrowIn" size={18} /> Send arrival</button>
+          <button className="button secondary" type="button" disabled={manual.isPending}
+            onClick={() => manual.mutate('departure')}><Icon name="arrowOut" size={18} /> Send departure</button>
+        </div>
         <div className="webhook-panel" role="status">
           {manual.isPending ? <p>Sending event…</p> : manual.data ? <>
             <span className="response-status response-success">HTTP 201 Accepted</span>

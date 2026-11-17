@@ -11,7 +11,7 @@ export function ForecastProcess({ explanation, model, occupied, capacity }: {
   const trees = explanation.tree_predictions
   const maximum = Math.max(1, ...trees)
   const minimum = Math.min(...trees)
-  return <details className="forecast-process" open>
+  return <details className="forecast-process">
     <summary>How this forecast works</summary>
     <p className="process-caption">Computed for this selection using {model}.</p>
     <div className="process-flow">
