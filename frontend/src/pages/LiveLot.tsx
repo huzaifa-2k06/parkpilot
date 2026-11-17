@@ -37,7 +37,7 @@ function TrendSparkline({ activity, capacity }: { activity: number[]; capacity: 
   </svg>
 }
 
-export function LiveLot({ spaces, events }: { spaces?: ParkingSpace[]; events?: ParkingEvent[] }) {
+export function LiveLot({ inspect, spaces, events }: { inspect: (space: ParkingSpace) => void; spaces?: ParkingSpace[]; events?: ParkingEvent[] }) {
   const [selected, setSelected] = useState<'available' | 'occupied'>('available')
   const capacity = spaces?.length
   const available = spaces?.filter(space => space.status === 'available').length
@@ -53,7 +53,7 @@ export function LiveLot({ spaces, events }: { spaces?: ParkingSpace[]; events?: 
           <div><h2>Lot overview</h2><p>Simulated facility</p></div>
           <span className="location-pill"><Icon name="lot" size={17} /> {capacity ?? '—'} bays</span>
         </div>
-        <Lot spaces={spaces} />
+        <Lot inspect={inspect} spaces={spaces} />
         <div className="lot-summary">
           <div className="occupancy-stat">
             <OccupancyRing percent={percent} />
@@ -85,8 +85,10 @@ export function LiveLot({ spaces, events }: { spaces?: ParkingSpace[]; events?: 
           </div>
           <div className="space-chips" aria-label={`${selected} bays`}>
             {matching ? matching.length
-              ? matching.map(space => <span className={`space-chip ${selected}`} key={space.space_id}
-                title={space.vehicle_id ?? undefined}>{space.space_id}</span>)
+              ? matching.map(space => space.status === 'occupied'
+                ? <button type="button" className="space-chip occupied" key={space.space_id}
+                    aria-label={`Inspect ${space.vehicle_id} in ${space.space_id}`} onClick={() => inspect(space)}>{space.space_id}</button>
+                : <span className="space-chip available" key={space.space_id}>{space.space_id}</span>)
               : <span className="quiet-state">No {selected} bays.</span>
               : <span className="quiet-state">Waiting for parking spaces…</span>}
           </div>

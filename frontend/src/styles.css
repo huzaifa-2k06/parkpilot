@@ -488,3 +488,28 @@ h1, h2, h3 { overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
   .event-ledger td { padding: 0; border: 0; }
   .event-ledger td:nth-child(even) { text-align: right; }
 }
+
+.bay-hit { fill: transparent; cursor: pointer; }
+.bay-hit:is(:hover, :focus-visible) { stroke: #315c50; stroke-width: 2; outline: none; }
+.vehicle-sheet { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(440px, 100%); max-width: 100%; height: 100dvh; max-height: 100dvh; border: 0; padding: 0; background: var(--color-surface); color: var(--color-ink); overflow: auto; }
+.vehicle-sheet::backdrop { background: rgb(16 29 24 / .32); }
+.vehicle-sheet article { min-height: 100%; padding: 26px; }
+.vehicle-sheet header { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.vehicle-sheet header p, .vehicle-sheet dt { color: var(--color-muted); font-size: .82rem; }
+.vehicle-sheet h2 { font-size: 1.8rem; font-weight: 650; }
+.vehicle-sheet figure { margin: 24px 0; }
+.vehicle-stage { position: relative; height: 230px; border-radius: 14px; overflow: hidden; background: linear-gradient(145deg, #f0f5f3, #e3e9e6); }
+.vehicle-stage span { position: absolute; inset: 0; display: grid; place-items: center; color: var(--color-muted); }
+.viewer-mount, .viewer-mount model-viewer { width: 100%; height: 100%; }
+.viewer-mount { opacity: 0; transition: opacity .2s; }
+.preview-ready .viewer-mount { opacity: 1; }
+.vehicle-sheet figcaption { font-size: .7rem; color: var(--color-muted); margin-top: 6px; }
+.vehicle-sheet figcaption a { text-decoration: underline; }
+.vehicle-sheet dl > div { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--color-rule); }
+.vehicle-sheet dd { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+@media (max-width: 650px) {
+  .vehicle-sheet { inset: auto 0 0; width: 100%; height: auto; max-height: 92dvh; border-radius: 20px 20px 0 0; }
+  .vehicle-sheet article { padding: 20px; }
+  .vehicle-stage { height: 180px; }
+}
+@media (prefers-reduced-motion: reduce) { .viewer-mount { transition: none; } }
