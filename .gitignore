@@ -1,0 +1,10 @@
+data/parking.db
+data/parking.db-*
+.env
+.env.*
+!.env.example
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
