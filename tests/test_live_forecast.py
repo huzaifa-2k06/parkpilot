@@ -8,6 +8,35 @@ from fastapi.testclient import TestClient
 from backend.database import Database
 from backend.main import create_app
 from backend.schemas import ParkingEventRequest
+from ml.live_forecast import select_horizons, scores
+
+
+def test_policy_selection_is_independent_of_test_outcomes() -> None:
+    """A held-out failure must be reported without tuning the selected policy."""
+    actual = [20, 10, 8]
+    baseline = scores(actual, [18, 8, 6], 20)
+    candidate = scores(actual, [20, 10, 8], 20)
+    short = {5: {'validation': {'persistence': baseline, 'regression': candidate}}}
+    calendar = {'same_day': {'validation': {
+        'persistence': baseline, 'calendar': candidate, 'regression': baseline,
+    }}}
+    selected = select_horizons(short, calendar)
+    assert selected == ([5], ['same_day'], [])
+    # Deliberately reverse the rankings in the test set.
+    short[5]['test'] = {'persistence': candidate, 'regression': baseline}
+    calendar['same_day']['test'] = {
+        'persistence': candidate, 'calendar': baseline, 'regression': candidate,
+    }
+    assert select_horizons(short, calendar) == selected
+
+
+def test_missing_full_lot_validation_examples_prevent_promotion() -> None:
+    baseline = scores([10, 8], [8, 6], 20)
+    candidate = scores([10, 8], [10, 8], 20)
+    assert candidate.mae < baseline.mae
+    assert select_horizons(
+        {5: {'validation': {'persistence': baseline, 'regression': candidate}}}, {},
+    ) == ([], [], [])
 
 
 def test_live_forecast_tracks_events_in_an_existing_database(tmp_path: Path) -> None:
