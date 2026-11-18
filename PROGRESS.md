@@ -1,5 +1,7 @@
 # ParkPilot progress
 
+- 2026-11-18: Added an Insights data breakdown covering the published Birmingham dataset and chronological splits, live simulator events, and generated arrival scenarios. Verified the production build and rendered Insights page in Chrome.
+
 ## Local dashboard dependency repair — 2026-11-18
 
 - Fixed Vite's unresolved `@google/model-viewer` import by syncing the existing lockfile dependencies. The package was already declared by the merged vehicle-inspector feature but missing from local node_modules.

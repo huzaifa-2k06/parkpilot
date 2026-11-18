@@ -514,3 +514,11 @@ h1, h2, h3 { overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
   .vehicle-stage { height: 180px; }
 }
 @media (prefers-reduced-motion: reduce) { .viewer-mount { transition: none; } }
+.data-breakdown h3 { margin: 1.25rem 0 .4rem; }
+.data-breakdown p { max-width: 80ch; margin: .5rem 0; line-height: 1.55; }
+.split-strip { display: grid; grid-template-columns: 15917fr 5095fr 5210fr; gap: 3px; max-width: 48rem; margin-top: 1rem; }
+.split-strip i { height: 8px; background: var(--color-accent); }
+.split-strip i:nth-child(2) { background: var(--color-chart-secondary); }
+.split-strip i:last-child { background: var(--color-forecast-ink); }
+.split-counts { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: .5rem 0 1rem; }
+.split-counts dd { font-weight: 700; margin: 0; }
