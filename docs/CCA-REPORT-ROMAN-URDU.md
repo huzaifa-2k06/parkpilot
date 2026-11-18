@@ -4,7 +4,7 @@
 
 **Course:** Machine Learning Lab, BS Artificial Intelligence, Dawood University of Engineering and Technology, Karachi. **Final activity:** Lab 14 Complex Computing Activity. **Instructor:** Engr. Hamza Farooqui. **Date:** 18 November 2026.
 
-**Team members aur roll numbers:** [Apne names aur roll numbers likhein]. **Section:** [Apna section likhein].
+**Team members aur roll numbers:** Yasir Shaikh — 24F-AI-123; Huzaifa bin Anas — 24F-AI-143. **Section:** [Apna section likhein].
 
 ### Abstract
 
