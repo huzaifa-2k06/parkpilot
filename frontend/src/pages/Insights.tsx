@@ -36,6 +36,35 @@ function formatClock(timestamp: string) {
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+function DataBreakdown() {
+  return <section className="card chart-card data-breakdown" aria-labelledby="breakdown-title">
+    <div className="card-header"><h2 id="breakdown-title">Project data breakdown</h2></div>
+    <h3>Historical forecast · Birmingham</h3>
+    <p>The October–December 2016 dataset contains 35,717 readings from 30 facilities.
+      Cleaning and time alignment produced 34,247 observations. Matching each observation with its
+      history and future target yielded 26,222 complete examples across 29 facilities.</p>
+    <div className="split-strip" aria-hidden="true"><i /><i /><i /></div>
+    <dl className="split-counts">
+      <div><dt>Training</dt><dd>15,917</dd></div>
+      <div><dt>Validation</dt><dd>5,095</dd></div>
+      <div><dt>Test</dt><dd>5,210</dd></div>
+    </dl>
+    <p>Earlier dates train the models, later dates select the model, and the latest dates measure its error.
+      Inputs include facility, capacity, weekday, hour and occupancy now, 30 minutes ago and 60 minutes ago.
+      The target is the fraction occupied 30 minutes ahead.</p>
+    <a className="text-button" href="https://doi.org/10.24432/C51K5Z">UCI Parking Birmingham dataset</a>
+    <h3>Live lot · Recorded simulator events</h3>
+    <p>Each accepted arrival or departure records a time, bay and vehicle ID in SQLite.
+      These records drive the 20-bay map, occupancy history and usage charts.
+      Current occupancy also supplies the arrival estimate through 30 minutes.</p>
+    <h3>Arrival forecast · Generated scenarios</h3>
+    <p>Short simulated runs evaluate recent activity at five-minute intervals.
+      Seasonal runs model weekday demand and parking duration. Four weeks of generated occupancy
+      supply the weekday-hour medians for longer arrival estimates. Two later three-week periods
+      supply validation and test data.</p>
+  </section>
+}
+
 function AnalyticsCharts({ analytics }: { analytics: Analytics }) {
   const hourly = analytics.hourly.map(item => ({ ...item, total: item.arrivals + item.departures }))
   const peakCount = Math.max(0, ...hourly.map(item => item.total))
@@ -256,6 +285,7 @@ export function Insights() {
   return <div className="insights-page">
     <div className="section-heading forecast-heading"><h2>Historical occupancy forecast</h2></div>
     <ForecastReplay />
+    <DataBreakdown />
     <div className="section-heading">
       <h2>Simulated lot activity</h2>
       <a className="text-button" href="#events">View events <Icon name="arrowRight" size={17} /></a>
