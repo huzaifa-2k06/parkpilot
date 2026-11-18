@@ -1,5 +1,7 @@
+import { VehicleInspector, sameStay } from './components/VehicleInspector'
+import type { ParkingSpace } from './api/parking'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { getEvents, getSpaces, getStatus } from './api/parking'
 import { EventList } from './components/Events'
 import { Icon } from './components/Icon'
@@ -20,9 +22,11 @@ function selectedSection() {
 }
 
 export function App() {
+  const opener = useRef<Element | null>(null)
+  const [stay, setStay] = useState<ParkingSpace>()
   const [section, setSection] = useState(selectedSection)
   useEffect(() => {
-    const select = () => setSection(selectedSection())
+    const select = () => { setStay(undefined); setSection(selectedSection()) }
     window.addEventListener('hashchange', select)
     return () => window.removeEventListener('hashchange', select)
   }, [])
@@ -43,6 +47,18 @@ export function App() {
     refetchInterval: refreshInterval,
   })
 
+  function inspect(space: ParkingSpace) {
+    if (!sameStay(space, spaces.data?.find(bay => bay.space_id === space.space_id))) return
+    opener.current = document.activeElement
+    setStay(space)
+  }
+  function closeInspector() {
+    setStay(undefined)
+    requestAnimationFrame(() => {
+      const target = opener.current?.isConnected ? opener.current : document.getElementById('dashboard-main')
+      if (target instanceof HTMLElement || target instanceof SVGElement) target.focus()
+    })
+  }
   const issue = spaces.error ?? events.error ?? status.error
   return (
     <div className="workspace-shell">
@@ -95,8 +111,8 @@ export function App() {
           }}><Icon name="refresh" size={16} /> Retry</button>
         </div>}
 
-        {section.id === 'lot' && <LiveLot spaces={spaces.data} events={events.data} />}
-        {section.id === 'simulate' && <Simulate spaces={spaces.data} events={events.data}
+        {section.id === 'lot' && <LiveLot inspect={inspect} spaces={spaces.data} events={events.data} />}
+        {section.id === 'simulate' && <Simulate inspect={inspect} spaces={spaces.data} events={events.data}
           running={status.isError ? undefined : status.data?.running} />}
         {section.id === 'insights' && <Suspense fallback={<p className="quiet-state" role="status">Loading insights…</p>}>
           <Insights />
@@ -107,6 +123,8 @@ export function App() {
           </div>
           <EventList events={events.data} filterable accepted />
         </section>}
+        {stay && <VehicleInspector stay={stay} current={spaces.data?.find(bay => bay.space_id === stay.space_id)}
+          stale={spaces.isError} close={closeInspector} />}
       </main>
     </div>
   )

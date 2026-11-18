@@ -1,25 +1,21 @@
-/* Hallmark · shape: app screen · genre: modern-minimal · theme: ParkPilot design.md · surface: absolute · v2.0.0
- * nav: icon rail · signature: live aerial parking lot · states: loading, empty, error, full */
-/* Hallmark · pre-emit critique: the map earns the largest surface; available bays use a restrained green outline. */
-/* Hallmark · waive 7b · surface: absolute · ParkPilot's design specifies white panels over the warm background. */
 @import "tailwindcss";
 
 :root {
   color-scheme: light;
-  --font-ui: Poppins, "Aptos", "Segoe UI", sans-serif;
+  --font-ui: Inter, "Aptos", "Segoe UI", sans-serif;
   --font-code: "Cascadia Mono", Consolas, monospace;
-  --color-ink: #1f2430;
-  --color-muted: #626978;
-  --color-background: #f6f1ec;
-  --color-glow: #f9e6d9;
+  --color-ink: #192320;
+  --color-muted: #54625c;
+  --color-background: #f3f5f3;
+  --color-glow: #e9efee;
   --color-surface: #fff;
   --color-glass: rgb(255 255 255 / .81);
-  --color-surface-soft: #fbf9f7;
-  --color-rule: #e9e3df;
+  --color-surface-soft: #f4f6f5;
+  --color-rule: #dfe5e1;
   --color-dark: #14171f;
-  --color-accent: #e8553d;
-  --color-accent-ink: #a63121;
-  --color-accent-soft: #fde7e2;
+  --color-accent: #416e60;
+  --color-accent-ink: #315c50;
+  --color-accent-soft: #e4eeea;
   --color-available: #1fa971;
   --color-available-ink: #176345;
   --color-available-soft: #ddf5ea;
@@ -60,9 +56,9 @@
   --color-car-pearl: #f8f5ed;
   --color-car-graphite: #414d5a;
   --color-car-gold: #dca652;
-  --shadow-panel: 0 10px 34px rgb(31 36 48 / .075);
-  --radius-panel: 24px;
-  --radius-control: 12px;
+  --shadow-panel: 0 2px 7px rgb(23 47 39 / .035);
+  --radius-panel: 16px;
+  --radius-control: 9px;
 }
 
 html, body { margin: 0; min-height: 100%; overflow-x: clip; scrollbar-color: var(--color-slab-edge) var(--color-background); }
@@ -128,10 +124,10 @@ h1, h2, h3 { overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
   font-weight: 600;
 }
 .nav-item:hover { background: var(--color-surface-soft); color: var(--color-ink); }
-.nav-item[aria-current="page"] { background: var(--color-accent-soft); color: var(--color-accent-ink); }
+.nav-item[aria-current="page"] { background: var(--color-dark); color: white; }
 .nav-local { margin-top: auto; color: var(--color-muted); font-size: .68rem; font-weight: 600; }
 .workspace-main { min-width: 0; }
-.workspace-heading { min-height: 72px; display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.workspace-heading { border-bottom: 1px solid var(--color-rule); padding-bottom: 16px; min-height: 72px; display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .wordmark { display: inline-block; color: var(--color-accent-ink); font-size: .9rem; font-weight: 730; letter-spacing: -.015em; }
 .workspace-heading h1 { margin-top: 0px; font-size: 2.38rem; line-height: 1.11; letter-spacing: -.055em; font-weight: 700; }
 .status-cluster { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 16px; padding-bottom: 4px; }
@@ -161,7 +157,7 @@ h1, h2, h3 { overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
 .status-banner button { margin-left: auto; }
 
 .live-grid, .simulation-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(275px, 310px); gap: 24px; align-items: start; }
-.card { min-width: 0; border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); background: var(--color-surface); }
+.card { min-width: 0; border: 1px solid var(--color-rule); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); background: var(--color-surface); }
 .live-side, .simulation-side { display: grid; gap: 20px; min-width: 0; }
 .side-card { background: var(--color-glass); backdrop-filter: blur(16px); padding: 20px; }
 .lot-card { padding: 20px; }
@@ -477,3 +473,43 @@ h1, h2, h3 { overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
   *, *::before, *::after { scroll-behavior: auto; transition-duration: 0s; }
   .bay-flash .bay-outline { animation: none; }
 }
+
+.event-ledger { width: 100%; border-collapse: collapse; text-align: left; font-size: .88rem; }
+.event-ledger th { color: var(--color-muted); font-size: .74rem; font-weight: 600; }
+.event-ledger :is(td, th) { padding: 13px 8px; border-bottom: 1px solid var(--color-rule); overflow-wrap: anywhere; }
+.event-ledger time { font-variant-numeric: tabular-nums; }
+.event-ledger .event-tag { font-size: .75rem; }
+.manual-actions { margin-bottom: 14px; }
+.control-dock h3 { font-size: .94rem; font-weight: 650; }
+@media (max-width: 650px) {
+  .event-ledger thead { position: absolute; clip-path: inset(50%); }
+  .event-ledger, .event-ledger tbody { display: block; }
+  .event-ledger tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--color-rule); }
+  .event-ledger td { padding: 0; border: 0; }
+  .event-ledger td:nth-child(even) { text-align: right; }
+}
+
+.bay-hit { fill: transparent; cursor: pointer; }
+.bay-hit:is(:hover, :focus-visible) { stroke: #315c50; stroke-width: 2; outline: none; }
+.vehicle-sheet { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(440px, 100%); max-width: 100%; height: 100dvh; max-height: 100dvh; border: 0; padding: 0; background: var(--color-surface); color: var(--color-ink); overflow: auto; }
+.vehicle-sheet::backdrop { background: rgb(16 29 24 / .32); }
+.vehicle-sheet article { min-height: 100%; padding: 26px; }
+.vehicle-sheet header { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.vehicle-sheet header p, .vehicle-sheet dt { color: var(--color-muted); font-size: .82rem; }
+.vehicle-sheet h2 { font-size: 1.8rem; font-weight: 650; }
+.vehicle-sheet figure { margin: 24px 0; }
+.vehicle-stage { position: relative; height: 230px; border-radius: 14px; overflow: hidden; background: linear-gradient(145deg, #f0f5f3, #e3e9e6); }
+.vehicle-stage span { position: absolute; inset: 0; display: grid; place-items: center; color: var(--color-muted); }
+.viewer-mount, .viewer-mount model-viewer { width: 100%; height: 100%; }
+.viewer-mount { opacity: 0; transition: opacity .2s; }
+.preview-ready .viewer-mount { opacity: 1; }
+.vehicle-sheet figcaption { font-size: .7rem; color: var(--color-muted); margin-top: 6px; }
+.vehicle-sheet figcaption a { text-decoration: underline; }
+.vehicle-sheet dl > div { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--color-rule); }
+.vehicle-sheet dd { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+@media (max-width: 650px) {
+  .vehicle-sheet { inset: auto 0 0; width: 100%; height: auto; max-height: 92dvh; border-radius: 20px 20px 0 0; }
+  .vehicle-sheet article { padding: 20px; }
+  .vehicle-stage { height: 180px; }
+}
+@media (prefers-reduced-motion: reduce) { .viewer-mount { transition: none; } }

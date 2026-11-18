@@ -32,6 +32,17 @@ export function EventList({ events, count, filterable = false, accepted = false 
           <strong>{filter === 'all' ? 'No activity yet' : `No ${filter} recorded`}</strong>
           <span>{filter === 'all' ? 'Accepted parking events will appear here.' : 'Try another activity filter.'}</span>
         </div>
+         : accepted ? <table className="event-ledger" aria-label="Accepted parking events">
+          <thead><tr><th>Time</th><th>Bay</th><th>Vehicle</th><th>Event</th></tr></thead>
+          <tbody>{visible?.map(event => {
+            const arrival = event.event_type === 'SPACE_OCCUPIED'
+            return <tr key={event.event_id}>
+              <td><time dateTime={event.timestamp}>{new Date(event.timestamp).toLocaleTimeString()}</time></td>
+              <td>{event.space_id}</td><td>{event.vehicle_id}</td>
+              <td><span className={`event-tag ${arrival ? 'arrival' : 'departure'}`}>{arrival ? 'Arrival' : 'Departure'}</span></td>
+            </tr>
+          })}</tbody>
+        </table>
         : <ul className="event-list">
           {visible?.map(event => {
             const arrival = event.event_type === 'SPACE_OCCUPIED'
@@ -41,7 +52,6 @@ export function EventList({ events, count, filterable = false, accepted = false 
               </span>
               <div className="event-copy"><strong>{event.space_id}</strong><span>{event.vehicle_id}</span></div>
               <span className={`event-tag ${arrival ? 'arrival' : 'departure'}`}>{arrival ? 'Arrived' : 'Left'}</span>
-              {accepted && <span className="event-tag arrival">Accepted</span>}
               <time dateTime={event.timestamp} title={new Date(event.timestamp).toLocaleString()}>
                 {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </time>
