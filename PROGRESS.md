@@ -1,5 +1,12 @@
 # ParkPilot progress
 
+## Local dashboard dependency repair — 2026-11-18
+
+- Fixed Vite's unresolved `@google/model-viewer` import by syncing the existing lockfile dependencies. The package was already declared by the merged vehicle-inspector feature but missing from local node_modules.
+- Stopped the local Vite process to release its Windows native-module lock, completed `npm ci --prefer-offline --no-audit --no-fund --fetch-retries=3`, and restarted on localhost:5173 with VITE_API_URL pointing to the existing ParkPilot API on 127.0.0.1:8002.
+- `npm run build` passed, with the existing large-bundle advisory. VehicleInspector's transformed module returned HTTP 200. Chrome rendered the live map, capacity and recent events without the Vite overlay; the app was reopened for the user.
+- No application source, dependency manifest or lockfile changes were needed.
+
 ## CCA documentation and evaluation correction — 2026-11-18
 
 - Branch: `codex/cca-report-evaluation-fix`, based on the existing integrated feature branch so the report describes the complete implementation.
