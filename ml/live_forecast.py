@@ -150,6 +150,21 @@ def improves(candidate: Scores, baseline: Scores) -> bool:
             and candidate.false_availability <= baseline.false_availability)
 
 
+def select_horizons(
+    short_reports: dict[int, dict[str, dict[str, Scores]]],
+    calendar_reports: dict[CalendarBand, dict[str, dict[str, Scores]]],
+) -> tuple[list[int], list[CalendarBand], list[CalendarBand]]:
+    """Select serving methods using validation only; test scores are report-only."""
+    short = [lead for lead, report in short_reports.items()
+             if improves(report['validation']['regression'], report['validation']['persistence'])]
+    calendar = [band for band, report in calendar_reports.items()
+                if improves(report['validation']['calendar'], report['validation']['persistence'])]
+    learned_calendar = [band for band in calendar
+                        if improves(calendar_reports[band]['validation']['regression'],
+                                    calendar_reports[band]['validation']['calendar'])]
+    return short, calendar, learned_calendar
+
+
 def train(output: Path) -> dict:
     from sklearn.linear_model import Ridge
     from simulator.scenarios import DEMO_CAPACITY, fast_run, seasonal_run
@@ -180,7 +195,6 @@ def train(output: Path) -> dict:
     short_weights = tuple(short_model.coef_.tolist())
     short_intercept = float(short_model.intercept_)
     short_reports = {}
-    short_candidates = []
     for lead in short_leads:
         report = {}
         for split in ('validation', 'test'):
@@ -191,9 +205,6 @@ def train(output: Path) -> dict:
                 estimated_occupancy(short_weights, short_intercept, row[0], capacity) for row in rows
             ], capacity)
             report[split] = {'persistence': baseline, 'regression': candidate}
-        validation = report['validation']
-        if improves(validation['regression'], validation['persistence']):
-            short_candidates.append(lead)
         short_reports[lead] = report
 
     start = datetime(2025, 1, 6, tzinfo=timezone.utc)
@@ -230,29 +241,19 @@ def train(output: Path) -> dict:
                                         calendar_features(t), capacity) for t in timestamps
                 ], capacity),
             }
+    short, calendar, learned_calendar = select_horizons(short_reports, calendar_reports)
     policy = ForecastPolicy(
         version=1, capacity=capacity,
         short_weights=short_weights, short_intercept=short_intercept,
-        learned_short_minutes=[
-            lead for lead in short_candidates
-            if improves(short_reports[lead]['test']['regression'],
-                        short_reports[lead]['test']['persistence'])
-        ],
+        learned_short_minutes=short,
         calendar_profile=profile, calendar_weights=calendar_weights,
         calendar_intercept=calendar_intercept,
-        calendar_bands=[
-            band for band, report in calendar_reports.items()
-            if all(improves(report[split]['calendar'], report[split]['persistence'])
-                   for split in ('validation', 'test'))
-        ],
-        learned_calendar_bands=[
-            band for band, report in calendar_reports.items()
-            if all(improves(report[split]['regression'], report[split]['calendar'])
-                   for split in ('validation', 'test'))
-        ],
+        calendar_bands=calendar,
+        learned_calendar_bands=learned_calendar,
     )
     report = {
         'source': 'ParkPilot simulated scenarios',
+        'selection_rule': 'Validation MAE improvement with measurable, non-worse full-lot false availability; test scores are report-only',
         'short_minutes': short_reports, 'calendar_bands': calendar_reports,
         'policy': policy,
     }

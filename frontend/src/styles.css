@@ -39,7 +39,8 @@
   --color-bay: #cdd4d3;
   --color-bay-available: #dce8dc;
   --color-bay-available-stroke: #77a28c;
-  --color-bay-occupied: #d9d5d2;
+  --color-bay-occupied: #eb7775;
+  --color-bay-occupied-stroke: #a32e35;
   --color-bay-incoming: #e4eed3;
   --color-bay-unavailable: #c2cacb;
   --color-wheel-stop: #b0b7b8;
@@ -201,7 +202,7 @@ h1, h2, h3 { overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
 .map-legend span { display: inline-flex; align-items: center; gap: 8px; }
 .legend-swatch { display: inline-block; width: 11px; height: 11px; border-radius: 4px; }
 .legend-swatch.available { color: var(--color-available-ink); background: var(--color-available-soft); border: 1px solid var(--color-available); }
-.legend-swatch.occupied { color: var(--color-accent-ink); background: var(--color-accent-soft); border: 1px solid var(--color-accent); }
+.legend-swatch.occupied { background: var(--color-bay-occupied); border: 1px solid var(--color-bay-occupied-stroke); }
 
 .lot-slab-shadow { fill: var(--color-slab-shadow); }
 .lot-slab-edge, .planter-curb { fill: var(--color-slab-edge); }
@@ -219,7 +220,7 @@ h1, h2, h3 { overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
 .shrub-shadow { fill: var(--color-shrub-shadow); }
 .bay-outline { fill: var(--color-bay); stroke: var(--color-lane-mark); stroke-width: 2px; }
 .bay-available .bay-outline { fill: var(--color-bay-available); stroke: var(--color-bay-available-stroke); }
-.bay-occupied .bay-outline, .bay-leaving .bay-outline { fill: var(--color-bay-occupied); }
+.bay-occupied .bay-outline, .bay-leaving .bay-outline { fill: var(--color-bay-occupied); stroke: var(--color-bay-occupied-stroke); }
 .bay-incoming .bay-outline { fill: var(--color-bay-incoming); stroke: var(--color-available); stroke-width: 2px; }
 .bay-unavailable .bay-outline { fill: var(--color-bay-unavailable); }
 .bay-hatch { stroke: var(--color-seam); stroke-width: 3px; }
