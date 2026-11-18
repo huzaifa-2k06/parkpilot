@@ -10,6 +10,7 @@
 - Historical metrics were read from the saved artifact; historical training was not rerun. Previously inspected scenario test data are not a fresh untouched evaluation.
 - Visually reviewed all five HTML report pages in headless Chrome and confirmed each fits a 1056-pixel Letter page at the chosen layout. No dependencies added. Run `python docs/render_report.py` after editing the report source.
 - Remaining user details: names, roll numbers and section. Team must complete the class demo/video and final submission. Clustering, AR, hyperparameter search, fresh real-facility validation and calibrated uncertainty remain unimplemented and are described honestly.
+- Opened [PR #9](https://github.com/huzaifa-2k06/parkpilot/pull/9) into main and merged the latest main into the feature branch, preserving the teammate's dashboard, vehicle inspector and audit changes. Added an audit follow-up without changing its original grade; fresh untouched evaluation and the remaining audit findings are still open.
 
 ## Lab manual review — 2026-11-18
 

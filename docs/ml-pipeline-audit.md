@@ -1,5 +1,14 @@
 ﻿*Reviewed with [ml-system-design-review](https://github.com/ML-SystemDesign/MLSystemDesign/tree/main/skills) · [ML System Design](https://arseny.info/ml_design_book) by Kravchenko and Babushkin*
 
+**Follow-up, 2026-11-18:** Validation-only live-policy selection is now implemented.
+Regression tests verify that reversing test rankings does not change selected
+horizons and that missing full-lot validation cases prevent promotion. The
+corrected scenario artifact was regenerated and the Python suite passed 36
+tests. This resolves the test-dependent selection code in finding 1; it does
+not provide a new untouched evaluation, change the original audit grade, or
+resolve findings 2–4. The original review below remains a record of the audited
+version. See the [CCA report](CCA-REPORT-ROMAN-URDU.md) for current behavior.
+
 ## ML System Design Scorecard: ParkPilot
 
 **Verdict:** Approve with concerns (2.73/4.00) · local prototype, parking availability, advisory use  
