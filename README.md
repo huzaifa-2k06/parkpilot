@@ -5,6 +5,19 @@ movements, and event analytics in a React dashboard. A separate historical
 replay evaluates a 30-minute occupancy forecast on the Birmingham dataset.
 See [progress](PROGRESS.md) and the project specs under `docs/`.
 
+## Academic report and viva preparation
+
+- [Final CCA report in Roman Urdu](docs/CCA-REPORT-ROMAN-URDU.md)
+- [Printable five-section report](docs/CCA-REPORT-ROMAN-URDU.html)
+- [Difficult ML viva questions and baseline/accuracy defence](docs/ML-VIVA-DEFENCE-ROMAN-URDU.md)
+- [All 14 labs and mock quiz](docs/QUIZ-GUIDE-ROMAN-URDU.md)
+
+The three integrated lab concepts are preprocessing, Multiple Linear Regression,
+and the Random Forest ensemble adapted to a regression target. Persistence is
+an additional non-learned benchmark. It is not counted as a lab concept.
+Historical regression results use MAE, RMSE and R², not classification accuracy.
+Fill the report's team details before submission and rehearse the class demo.
+
 ## Setup and run
 
 Use Python 3.11 or 3.12 and Node.js 22.12+ (or 20.19+). From the repository
@@ -137,7 +150,10 @@ to seven days. It uses simulated calendar demand rather than projecting the
 current occupancy forward for days. At the 30-minute mark, regression reduced
 MAE from 2.42 to about 1.72 spaces, but the held-out runs contained no full-lot
 targets, so persistence remains the live method. For the two longer bands,
-calendar MAE was 1.92 and 1.96 spaces. Calendar forecasts still showed free
+calendar MAE was 1.92 and 1.96 spaces. Policy selection uses validation scores
+only; test scores are report-only. The earlier test-dependent promotion rule
+was corrected on 2026-11-18. Reusing the inspected scenario test set does not
+constitute a new untouched evaluation. Calendar forecasts still showed free
 spaces in roughly 49% of held-out full-lot cases, so availability is an
 estimate. These results describe the scenario generator and do not establish
 accuracy on a real facility. The live forecast and the Birmingham replay use
